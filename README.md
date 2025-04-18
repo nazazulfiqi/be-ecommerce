@@ -74,22 +74,22 @@ npm run dev
 
 Use **Postman** or similar tools to test the endpoints. Example login request:
 
-\`\`\`
+```
 POST /api/auth/login
-\`\`\`
+```
 
 Example protected route (Address):
 
-\`\`\`
+```
 GET /api/addresses
 Headers: Authorization: Bearer <token>
-\`\`\`
+```
 
 ---
 
 ## 📂 Folder Structure
 
-\`\`\`
+```
 .
 ├── controllers/
 ├── services/
@@ -100,7 +100,7 @@ Headers: Authorization: Bearer <token>
 ├── utils/
 ├── config/
 └── migrations/
-\`\`\`
+```
 
 ---
 
