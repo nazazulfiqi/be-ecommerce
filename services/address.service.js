@@ -9,15 +9,48 @@ export const AddressService = {
     return await Address.findAll({ where: { user_id: userId } });
   },
 
-  async getAddressById(id) {
-    return await Address.findByPk(id);
+  async getAddressById(addressId, userId) {
+    try {
+      const address = await Address.findOne({
+        where: {
+          id: addressId,
+          user_id: userId,
+        },
+      });
+
+      return address;
+    } catch (err) {
+      throw new Error("Error retrieving address: " + err.message);
+    }
   },
 
-  async updateAddress(id, payload) {
-    return await Address.update(payload, { where: { id } });
+  async updateAddress(addressId, updatedData, userId) {
+    try {
+      const [updatedRowCount] = await Address.update(updatedData, {
+        where: {
+          id: addressId,
+          user_id: userId,
+        },
+      });
+
+      return [updatedRowCount];
+    } catch (err) {
+      throw new Error("Error updating address: " + err.message);
+    }
   },
 
-  async deleteAddress(id) {
-    return await Address.destroy({ where: { id } });
+  async deleteAddress(addressId, userId) {
+    try {
+      const deletedCount = await Address.destroy({
+        where: {
+          id: addressId,
+          user_id: userId,
+        },
+      });
+
+      return deletedCount > 0;
+    } catch (err) {
+      throw new Error("Error deleting address: " + err.message);
+    }
   },
 };

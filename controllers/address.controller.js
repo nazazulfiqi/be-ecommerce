@@ -26,9 +26,16 @@ export const AddressController = {
 
   async findOne(req, res) {
     try {
-      const address = await AddressService.getAddressById(req.params.id);
-      if (!address)
+      const userId = req.user.id;
+      const address = await AddressService.getAddressById(
+        req.params.id,
+        userId
+      );
+
+      if (!address) {
         return res.status(404).json(ResponseDTO.notFound("Address not found"));
+      }
+
       return res.json(ResponseDTO.success("Address found", address));
     } catch (err) {
       return res.status(500).json(ResponseDTO.error(err.message));
@@ -37,14 +44,20 @@ export const AddressController = {
 
   async update(req, res) {
     try {
+      const userId = req.user.id;
+
       const updated = await AddressService.updateAddress(
         req.params.id,
-        req.body
+        req.body,
+        userId
       );
-      if (updated[0] === 0)
+
+      if (updated[0] === 0) {
         return res
           .status(404)
           .json(ResponseDTO.notFound("Address not found or unchanged"));
+      }
+
       return res.json(ResponseDTO.success("Address updated"));
     } catch (err) {
       return res.status(500).json(ResponseDTO.error(err.message));
@@ -53,9 +66,15 @@ export const AddressController = {
 
   async delete(req, res) {
     try {
-      const deleted = await AddressService.deleteAddress(req.params.id);
-      if (!deleted)
+      const userId = req.user.id; // Mendapatkan user_id dari request yang sudah didecode dari token
+
+      // Hapus alamat hanya jika alamat tersebut milik user ini
+      const deleted = await AddressService.deleteAddress(req.params.id, userId);
+
+      if (!deleted) {
         return res.status(404).json(ResponseDTO.notFound("Address not found"));
+      }
+
       return res.json(ResponseDTO.success("Address deleted"));
     } catch (err) {
       return res.status(500).json(ResponseDTO.error(err.message));
