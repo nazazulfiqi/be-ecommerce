@@ -30,22 +30,22 @@ This is a simple backend for an e-commerce application built using **Express.js*
 
 ### 1. Clone the Repository
 
-\`\`\`bash
+```bash
 git clone https://github.com/yourusername/ecommerce-backend.git
 cd ecommerce-backend
-\`\`\`
+```
 
 ### 2. Install Dependencies
 
-\`\`\`bash
+```bash
 npm install
-\`\`\`
+```
 
 ### 3. Setup Environment Variables
 
-Create a \`.env\` file in the root directory and fill in the following:
+Create a `.env` file in the root directory and fill in the following:
 
-\`\`\`env
+```env
 DB_HOST=localhost
 DB_PORT=5432
 DB_USERNAME=your_db_user
@@ -54,19 +54,19 @@ DB_DATABASE=your_db_name
 DB_DIALECT=postgres
 
 JWT_SECRET=your_jwt_secret
-\`\`\`
+```
 
 ### 4. Run Migrations
 
-\`\`\`bash
+```bash
 npx sequelize-cli db:migrate
-\`\`\`
+```
 
 ### 5. Start the Server
 
-\`\`\`bash
+```bash
 npm run dev
-\`\`\`
+```
 
 ---
 
