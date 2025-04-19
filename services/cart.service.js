@@ -3,49 +3,41 @@ import { CartItem } from "../models/cartItem.model.js";
 import { Product } from "../models/product.model.js";
 
 export const CartService = {
-  // Membuat cart baru atau mengambil cart yang sudah ada untuk pengguna
   async getOrCreateCart(userId) {
-    let cart = await Cart.findOne({
-      where: { user_id: userId },
-    });
-
-    // Jika tidak ada cart, buat cart baru
+    let cart = await Cart.findOne({ where: { user_id: userId } });
     if (!cart) {
-      cart = await Cart.create({
-        user_id: userId,
-      });
+      cart = await Cart.create({ user_id: userId });
     }
-
     return cart;
   },
 
-  // Menambah produk ke dalam cart
-  async addToCart(userId, productId, quantity) {
+  async addToCart(userId, productId, quantity = 1) {
     const cart = await this.getOrCreateCart(userId);
 
-    // Cek apakah produk sudah ada dalam cart
-    const exist = await CartItem.findOne({
-      where: { cart_id: cart.id, product_id: productId },
+    const existingItem = await CartItem.findOne({
+      where: {
+        cart_id: cart.id,
+        product_id: productId,
+      },
     });
 
-    if (exist) {
-      // Update quantity jika produk sudah ada di cart
-      exist.quantity += quantity;
-      await exist.save();
-      return exist;
+    if (existingItem) {
+      // Tambah quantity jika sudah ada
+      existingItem.quantity += Number(quantity) || 1;
+      await existingItem.save();
+      return existingItem;
     }
 
-    // Jika produk belum ada, tambah produk ke cart
-    const cartItem = await CartItem.create({
+    // Tambah item baru ke cart
+    const newItem = await CartItem.create({
       cart_id: cart.id,
       product_id: productId,
-      quantity: quantity,
+      quantity: Number(quantity) || 1,
     });
 
-    return cartItem;
+    return newItem;
   },
 
-  // Mengambil semua item dalam cart
   async getCartItems(userId) {
     const cart = await this.getOrCreateCart(userId);
 
@@ -62,7 +54,6 @@ export const CartService = {
     return items;
   },
 
-  // Menghapus produk dari cart
   async removeFromCart(userId, productId) {
     const cart = await this.getOrCreateCart(userId);
 
@@ -80,21 +71,23 @@ export const CartService = {
     return deleted;
   },
 
-  // Mengupdate jumlah produk dalam cart
   async updateQuantity(userId, productId, quantity) {
     const cart = await this.getOrCreateCart(userId);
 
-    const cartItem = await CartItem.findOne({
-      where: { cart_id: cart.id, product_id: productId },
+    const item = await CartItem.findOne({
+      where: {
+        cart_id: cart.id,
+        product_id: productId,
+      },
     });
 
-    if (!cartItem) {
+    if (!item) {
       throw new Error("Product not found in cart");
     }
 
-    cartItem.quantity = quantity;
-    await cartItem.save();
+    item.quantity = Number(quantity);
+    await item.save();
 
-    return cartItem;
+    return item;
   },
 };

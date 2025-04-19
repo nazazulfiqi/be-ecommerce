@@ -1,5 +1,6 @@
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/sequelize.js";
+import { CartItem } from "./cartItem.model.js"; // Import CartItem model
 
 const Cart = sequelize.define(
   "Cart",
@@ -20,5 +21,8 @@ const Cart = sequelize.define(
     timestamps: true,
   }
 );
+
+// Asosiasi antara Cart dan CartItem
+Cart.hasMany(CartItem, { foreignKey: "cart_id", as: "items" });
 
 export { Cart };
