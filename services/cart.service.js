@@ -90,4 +90,8 @@ export const CartService = {
 
     return item;
   },
+  async clearCart(userId, transaction = null) {
+    const cart = await this.getOrCreateCart(userId);
+    await CartItem.destroy({ where: { cart_id: cart.id }, transaction });
+  },
 };
