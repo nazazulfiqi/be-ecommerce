@@ -9,16 +9,18 @@ const upload = multer({ dest: "uploads/" });
 router.post(
   "/",
   authenticate,
-  upload.single("image"),
+  upload.array("image", 5),
   ProductController.create
 );
+
 router.get("/", authenticate, ProductController.findAll); // public access
 router.get("/:id", authenticate, ProductController.findOne);
 router.put(
   "/:id",
   authenticate,
-  upload.single("image"),
+  upload.array("image", 5), // Ganti dari .single ke .array
   ProductController.update
 );
+router.delete("/:id", authenticate, ProductController.delete);
 
 export default router;

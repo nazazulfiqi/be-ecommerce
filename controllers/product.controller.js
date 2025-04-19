@@ -6,6 +6,7 @@ import { uploadImage } from "../utils/cloudinary.js";
 import { fileURLToPath } from "url";
 import { dirname, join } from "path";
 import fs from "fs";
+import { Category } from "../models/category.model.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = dirname(__filename);
@@ -14,20 +15,19 @@ export const ProductController = {
   // Create new product
   async create(req, res) {
     try {
-      const { name, slug, description, price, stock, brand, category_id } =
-        req.body;
+      const { name, description, price, stock, brand, category_id } = req.body;
+
+      const slug = await ProductService.generateSlug(name);
 
       // Upload image if provided
-      let imageUrl;
-      if (req.file) {
-        const uploadResult = await uploadImage(
-          req.file.path,
-          req.file.filename
-        );
-        imageUrl = uploadResult.secure_url;
+      let imageUrls = [];
 
-        // Remove the uploaded image file after uploading to Cloudinary
-        fs.unlinkSync(req.file.path);
+      if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+          const uploadResult = await uploadImage(file.path, file.filename);
+          imageUrls.push(uploadResult.secure_url);
+          fs.unlinkSync(file.path);
+        }
       }
 
       // Create new product
@@ -39,16 +39,17 @@ export const ProductController = {
         stock,
         brand,
         category_id,
-        image_url: imageUrl, // Assign image_url to the product (first image)
+        image_url: imageUrls[0] || null, // pakai image pertama sebagai thumbnail
       });
 
-      // Save the product image in product_images table
-      if (imageUrl) {
-        await ProductImage.create({
+      // Simpan semua image ke ProductImage
+      if (imageUrls.length > 0) {
+        const imgData = imageUrls.map((url, idx) => ({
           product_id: newProduct.id,
-          image_url: imageUrl,
-          is_main: true, // Set as the main image
-        });
+          image_url: url,
+          is_main: idx === 0,
+        }));
+        await ProductImage.bulkCreate(imgData);
       }
 
       return res
@@ -79,46 +80,71 @@ export const ProductController = {
     }
   },
   // Get Product by ID
+  // Get Product by ID
   async findOne(req, res) {
     try {
       const product = await Product.findByPk(req.params.id, {
-        include: ProductImage, // Include related images
+        include: [
+          {
+            model: ProductImage,
+            as: "images", // pastikan ini sesuai alias di relasi
+          },
+          {
+            model: Category,
+            as: "category", // alias juga
+            attributes: ["id", "name"],
+          },
+        ],
       });
 
       if (!product) {
         return res.status(404).json(ResponseDTO.notFound("Product not found"));
       }
 
-      return res
-        .status(200)
-        .json(ResponseDTO.success("Product found", product));
+      // Convert the product instance to a plain object
+      const productJSON = product.toJSON();
+
+      // Remove the 'category' field and add 'category_name'
+      const { category, ...restProductData } = productJSON;
+
+      return res.status(200).json(
+        ResponseDTO.success("Product found", {
+          ...restProductData,
+          category_name: category?.name || null,
+        })
+      );
     } catch (err) {
       return res.status(500).json(ResponseDTO.error(err.message));
     }
   },
-
   // Update Product
   async update(req, res) {
     try {
-      const { name, slug, description, price, stock, brand, category_id } =
-        req.body;
+      const { name, description, price, stock, brand, category_id } = req.body;
 
       const product = await Product.findByPk(req.params.id);
       if (!product) {
         return res.status(404).json(ResponseDTO.notFound("Product not found"));
       }
 
-      let imageUrl = product.image_url; // Keep the current image if no new image uploaded
-      if (req.file) {
-        const uploadResult = await uploadImage(
-          req.file.path,
-          req.file.filename
-        );
-        imageUrl = uploadResult.secure_url;
-
-        // Remove the uploaded image file after uploading to Cloudinary
-        fs.unlinkSync(path.join(__dirname, "..", "uploads", req.file.filename));
+      let slug = product.slug;
+      if (name && name !== product.name) {
+        slug = await ProductService.generateSlug(name);
       }
+
+      let imageUrls = [];
+
+      // Upload new images if provided
+      if (req.files && req.files.length > 0) {
+        for (const file of req.files) {
+          const uploadResult = await uploadImage(file.path, file.filename);
+          imageUrls.push(uploadResult.secure_url);
+          fs.unlinkSync(file.path);
+        }
+      }
+
+      // Gunakan gambar pertama sebagai thumbnail jika ada gambar baru
+      const imageUrl = imageUrls.length > 0 ? imageUrls[0] : product.image_url;
 
       const updatedProduct = await product.update({
         name,
@@ -131,18 +157,45 @@ export const ProductController = {
         image_url: imageUrl,
       });
 
-      // Save new product image in product_images table if imageUrl is updated
-      if (req.file && imageUrl !== product.image_url) {
-        await ProductImage.create({
+      // Simpan gambar baru ke product_images jika ada
+      if (imageUrls.length > 0) {
+        await ProductImage.destroy({
+          where: { product_id: updatedProduct.id },
+        }); // opsional
+        const imgData = imageUrls.map((url, idx) => ({
           product_id: updatedProduct.id,
-          image_url: imageUrl,
-          is_main: true, // Set as the main image
-        });
+          image_url: url,
+          is_main: idx === 0,
+        }));
+        await ProductImage.bulkCreate(imgData);
       }
 
       return res
         .status(200)
         .json(ResponseDTO.success("Product updated", updatedProduct));
+    } catch (err) {
+      return res.status(500).json(ResponseDTO.error(err.message));
+    }
+  },
+
+  // Delete Product
+  async delete(req, res) {
+    try {
+      const productId = req.params.id;
+
+      // Cari produk berdasarkan ID
+      const product = await Product.findByPk(productId);
+
+      if (!product) {
+        return res.status(404).json(ResponseDTO.notFound("Product not found"));
+      }
+
+      // Hapus produk
+      await product.destroy();
+
+      return res
+        .status(200)
+        .json(ResponseDTO.success("Product successfully deleted"));
     } catch (err) {
       return res.status(500).json(ResponseDTO.error(err.message));
     }
