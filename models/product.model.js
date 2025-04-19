@@ -1,7 +1,9 @@
+// product.model.js
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/sequelize.js";
 import { Category } from "./category.model.js";
 
+// Product model
 const Product = sequelize.define(
   "Product",
   {
@@ -21,6 +23,8 @@ const Product = sequelize.define(
   }
 );
 
+// Product associations
 Product.belongsTo(Category, { foreignKey: "category_id", as: "category" });
 
+// Don't create the relation here; do it in a separate setup function.
 export { Product };
