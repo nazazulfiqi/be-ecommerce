@@ -3,6 +3,8 @@ import { Wishlist } from "./wishlist.model.js";
 import { Product } from "./product.model.js";
 import { Order } from "./order.model.js";
 import { OrderItem } from "./orderItem.model.js";
+import { Voucher } from "./voucher.model.js";
+import { OrderVoucher } from "./orderVoucher.js";
 
 export function setupAssociations() {
   // Wishlist <-> Product
@@ -16,4 +18,19 @@ export function setupAssociations() {
   // OrderItem <-> Product
   OrderItem.belongsTo(Product, { foreignKey: "product_id", as: "product" });
   Product.hasMany(OrderItem, { foreignKey: "product_id", as: "order_items" });
+
+  // ✅ Order <-> Voucher (Many-to-Many)
+  Order.belongsToMany(Voucher, {
+    through: OrderVoucher,
+    foreignKey: "order_id",
+    otherKey: "voucher_id",
+    as: "vouchers",
+  });
+
+  Voucher.belongsToMany(Order, {
+    through: OrderVoucher,
+    foreignKey: "voucher_id",
+    otherKey: "order_id",
+    as: "orders",
+  });
 }

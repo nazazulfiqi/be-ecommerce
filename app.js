@@ -7,6 +7,7 @@ import productRoutes from "./routes/product.route.js";
 import cartRoutes from "./routes/cart.route.js";
 import wishlistRoutes from "./routes/wishlist.route.js";
 import orderRoutes from "./routes/order.route.js";
+import voucherRoutes from "./routes/voucher.route.js";
 import { setupAssociations } from "./models/associations.js";
 
 dotenv.config();
@@ -22,5 +23,6 @@ app.use("/api/products", productRoutes);
 app.use("/api/carts", cartRoutes);
 app.use("/api/wishlists", wishlistRoutes);
 app.use("/api/orders", orderRoutes);
+app.use("/api/vouchers", voucherRoutes);
 
 app.listen(3000, () => console.log("Server running on port 3000"));

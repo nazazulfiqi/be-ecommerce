@@ -1,6 +1,7 @@
 // models/order.model.js
 import { DataTypes } from "sequelize";
 import { sequelize } from "../config/sequelize.js";
+import { Voucher } from "./voucher.model.js";
 
 const Order = sequelize.define(
   "Order",
@@ -35,6 +36,11 @@ const Order = sequelize.define(
     shipping_fee: {
       type: DataTypes.DECIMAL(12, 2),
       allowNull: false,
+    },
+
+    discount_amount: {
+      type: DataTypes.DECIMAL(12, 2),
+      allowNull: true, // Kolom ini optional
     },
   },
   {

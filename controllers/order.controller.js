@@ -6,12 +6,14 @@ export const OrderController = {
   async create(req, res) {
     try {
       const userId = req.user.id;
-      const { address_id, product_ids } = req.body;
+      const { address_id, product_ids, voucher_code } = req.body;
 
       const order = await OrderService.createOrder(
         userId,
         address_id,
-        product_ids
+        product_ids,
+        10000, // shipping fee default
+        voucher_code // voucher code ditambahkan ke service
       );
       return res.status(201).json(ResponseDTO.success("Order created", order));
     } catch (err) {
